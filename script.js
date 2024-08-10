@@ -5,11 +5,17 @@ const Gameboard = (() => {
 
     const getBoard = () => board;
 
-    const setCell = (index, value) => {
+    const setCell = (index, currentPlayer) => {
         if (!board[index]) {
-            board[index] = value;
+            board[index] = currentPlayer.mark;
             console.log(board);
-            renderBoard();
+            if (GameController.checkForWin()) {
+                const dialog = document.querySelector("dialog");
+                dialog.innerText = currentPlayer.name + ' won'
+                dialog.addEventListener('click', () => dialog.close());
+                dialog.addEventListener('close', () => resetBoard());
+                dialog.showModal();
+            }
             return true;
         }
         return false;
@@ -19,6 +25,11 @@ const Gameboard = (() => {
         board.fill(null)
         renderBoard();
     };
+
+    const renderScore = (player1, player2) => {
+        const score = document.querySelector('.score');
+        score.innerText = `${player1.name} ${player1.score} : ${player2.score} ${player2.name}`;
+    }
 
     const renderBoard = () => {
         const boardElement = document.querySelector('.board');
@@ -33,42 +44,66 @@ const Gameboard = (() => {
         })
     }
 
-    return { getBoard, setCell, resetBoard, renderBoard };
+    return { getBoard, setCell, resetBoard, renderBoard, renderScore };
     
 })();
 
 
-const Player = (name, mark) => {
-    return { name, mark };
+const Player = (name, mark, score) => {
+    return { name, mark, score };
 }
 
 
 const GameController = (() => {
     let currentPlayer;
 
-    const player1 = Player('Player 1', 'X');
-    const player2 = Player('Player 2', 'O');
+    const player1 = Player('Bob', 'X', 0);
+    const player2 = Player('John', 'O', 0);
 
     const startGame = () => {
         currentPlayer = player1;
         Gameboard.resetBoard();
     }
 
-    const switchPlayer = () => {
-        currentPlayer = currentPlayer === player1 ? player2 : player1;
-        Gameboard.renderBoard();
-    }
-
     const handleInput = (index) => {
-        if (Gameboard.setCell(index, currentPlayer.mark)) {
-            switchPlayer();
+        if (Gameboard.setCell(index, currentPlayer)) {
+            currentPlayer = currentPlayer === player1 ? player2 : player1;
+            Gameboard.renderBoard();
         }
     }
 
     const getCurrentPlayer = () => currentPlayer.name;
+
+    const checkForWin = () => {
+        board = Gameboard.getBoard();
+        const winningCombinations = [
+            [0, 1, 2],
+            [3, 4, 5],
+            [6, 7, 8],
+            [0, 3, 6],
+            [1, 4, 7],
+            [2, 5, 8],
+            [0, 4, 8],
+            [2, 4, 6] 
+        ];
     
-    return { startGame, handleInput, getCurrentPlayer };
+        for (let i = 0; i < winningCombinations.length; i++) {
+            const [a, b, c] = winningCombinations[i];
+            
+            if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+                currentPlayer.score++;
+                Gameboard.renderScore(player1, player2);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    Gameboard.renderScore(player1, player2);
+    
+    return { startGame, handleInput, getCurrentPlayer, checkForWin };
 })();
+
 
 document.addEventListener('DOMContentLoaded', () => {
     
