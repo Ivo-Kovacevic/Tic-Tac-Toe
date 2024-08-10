@@ -9,14 +9,31 @@ const Gameboard = (() => {
         if (!board[index]) {
             board[index] = value;
             console.log(board);
+            renderBoard();
             return true;
         }
         return false;
     }
 
-    const resetBoard = () => board.fill(null);
+    const resetBoard = () => {
+        board.fill(null)
+        renderBoard();
+    };
 
-    return { getBoard, setCell, resetBoard };
+    const renderBoard = () => {
+        const boardElement = document.querySelector('.board');
+        boardElement.innerHTML = '';
+        document.querySelector('.player-name').innerText = GameController.getCurrentPlayer() + ' turn';
+        board.forEach((value, index) => {
+            const cell = document.createElement('div');
+            cell.classList.add('box')
+            cell.addEventListener('click', () => GameController.handleInput(index));
+            cell.innerText = value;
+            boardElement.appendChild(cell);
+        })
+    }
+
+    return { getBoard, setCell, resetBoard, renderBoard };
     
 })();
 
@@ -33,12 +50,13 @@ const GameController = (() => {
     const player2 = Player('Player 2', 'O');
 
     const startGame = () => {
-        Gameboard.resetBoard();
         currentPlayer = player1;
+        Gameboard.resetBoard();
     }
 
     const switchPlayer = () => {
         currentPlayer = currentPlayer === player1 ? player2 : player1;
+        Gameboard.renderBoard();
     }
 
     const handleInput = (index) => {
@@ -47,23 +65,16 @@ const GameController = (() => {
         }
     }
 
-    return { startGame, handleInput };
+    const getCurrentPlayer = () => currentPlayer.name;
+    
+    return { startGame, handleInput, getCurrentPlayer };
 })();
 
 document.addEventListener('DOMContentLoaded', () => {
-
-    GameController.startGame();
-
+    
     const button = document.querySelector('.new-game');
     button.addEventListener('click', () => GameController.startGame())
-
-    const boardElement = document.querySelector('.board');
-
-    for (let i = 0; i < 9; i++) {
-        const cell = document.createElement('div');
-        cell.classList.add('box')
-        cell.addEventListener('click', () => GameController.handleInput(i));
-        boardElement.appendChild(cell);
-    }
+    
+    GameController.startGame();
+    Gameboard.renderBoard();
 })
-
